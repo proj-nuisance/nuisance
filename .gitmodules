@@ -1,0 +1,3 @@
+[submodule "data/QA"]
+	path = data/QA
+	url = http://datasets.datalad.org/dbic/QA/.git
