@@ -4,3 +4,6 @@
 [submodule "extractions"]
 	path = extractions
 	url = ./extractions
+[submodule "data/extractions"]
+	path = data/extractions
+	url = ./data/extractions
