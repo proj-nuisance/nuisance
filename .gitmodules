@@ -1,9 +1,6 @@
 [submodule "data/QA"]
 	path = data/QA
 	url = http://datasets.datalad.org/dbic/QA/.git
-[submodule "extractions"]
-	path = extractions
-	url = ./extractions
 [submodule "data/extractions"]
 	path = data/extractions
 	url = ./data/extractions
