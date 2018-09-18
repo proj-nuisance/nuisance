@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Processing the JSON files in this folder
 import os
 import os.path as op
@@ -88,4 +90,6 @@ def qa_metric_producer(filename, output_csv):
 
     source.close()
 
-# qa_metric_producer("20180205", "mriqc_extraction.csv")
+if __name__ == '__main__':
+    # TODO - get all directories to work on as your cmdline arguments
+    qa_metric_producer("20180205", "mriqc_extraction.csv")
