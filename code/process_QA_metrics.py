@@ -86,7 +86,7 @@ def extract_mriqc():
     first_extraction.close()
 
 
-def qa_metric_producer(source):
+def qa_metric_producer(source, output_csv):
 
     start_date = 49  # index for date that the QA metrics were taken
     destination = open(output_csv, "a")
@@ -114,7 +114,7 @@ def main(args=None):
     parser = get_opt_parser()
     (options, inputs) = parser.parse_args(args)
 
-    qa_metric_producer(inputs[0])
+    qa_metric_producer(inputs[0], options.output_csv)
 
 
 if __name__ == '__main__':
