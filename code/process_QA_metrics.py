@@ -92,11 +92,12 @@ def qa_metric_producer(source, output_csv):
     destination = open(output_csv, "a")
     product = csv.writer(destination)
 
-    for file in glob(source):  # os.listdir(os.fsencode("derivatives")):
+    for file in source:  # os.listdir(os.fsencode("derivatives")):
         sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
         bids_meta = greetings["bids_meta"]
 
+        # 2018 and later conditions
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in bids_meta:
             if 'snr_total' in greetings:
                 product.writerow([os.fsdecode(file)[start_date:start_date+8],
@@ -107,6 +108,14 @@ def qa_metric_producer(source, output_csv):
                                   os.fsdecode(file)[start_date+9:], greetings['tsnr'], bids_meta["SAR"],
                                   bids_meta["AcquisitionTime"], bids_meta["TxRefAmp"]])
 
+        # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
+        else:
+            if 'tsnr' in greetings and 'SAR' in bids_meta["global"]["const"] \
+                    and "AcquisitionTime" in bids_meta["time"]["samples"]:
+                product.writerow([os.fsdecode(file)[start_date:start_date+8], os.fsdecode(file)[start_date+9:],
+                                  greetings['tsnr'], bids_meta["global"]["const"]["SAR"],
+                                  bids_meta["time"]["samples"]["AcquisitionTime"]])
+
     destination.close()
 
 
@@ -114,7 +123,7 @@ def main(args=None):
     parser = get_opt_parser()
     (options, inputs) = parser.parse_args(args)
 
-    qa_metric_producer(inputs[0], options.output_csv)
+    qa_metric_producer(inputs, options.output_csv)
 
 
 if __name__ == '__main__':
