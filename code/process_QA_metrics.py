@@ -101,7 +101,6 @@ def qa_metric_producer(source, output_csv):
         info = re.search('.*/sub-(?P<subj>\w*)/ses-(?P<date>[0-9]+)/.*', item).groupdict()
         sesame = open(os.fsdecode(item), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
-        # bids_meta = greetings["bids_meta"]
 
         # 2018 and later conditions
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
@@ -111,6 +110,7 @@ def qa_metric_producer(source, output_csv):
 
         # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
         else:
+            bids_meta = greetings["bids_meta"]
             if 'tsnr' in greetings and 'SAR' in bids_meta["global"]["const"] \
                     and "AcquisitionTime" in bids_meta["time"]["samples"]:
                 product.writerow([os.fsdecode(file)[start_date:start_date+8], os.fsdecode(file)[start_date+9:],
