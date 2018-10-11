@@ -121,9 +121,8 @@ def qa_metric_producer(source, output_csv):
 
 def main(args=None):
     parser = get_opt_parser()
-    (options) = parser.parse_args(args)
-    print(options)
-    qa_metric_producer(options.input, options.output_csv)
+    (options, source) = parser.parse_args(args)
+    qa_metric_producer(source, options.output_csv)
 
 
 if __name__ == '__main__':
