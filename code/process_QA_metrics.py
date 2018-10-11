@@ -101,7 +101,7 @@ def qa_metric_producer(source, output_csv):
         info = re.search('.*/sub-(?P<subj>\w*)/ses-(?P<date>[0-9]+)/.*', item).groupdict()
         sesame = open(os.fsdecode(item), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
-
+        print(item)  # debugging
         # 2018 and later conditions
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
             product.writerow([info[date],
