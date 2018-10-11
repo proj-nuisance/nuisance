@@ -28,6 +28,11 @@ def get_opt_parser():
         Option("-o", "--output",
                dest="output_csv", default='You didnt say where to write it to',
                help="Where do you want the extraction to be written to"),
+
+        Option("-i", "--input",
+               dest="input", default="You didn't say where it was coming from",
+               help="Where do you want the files to be taken from?"),
+
     ])
 
     return p
@@ -40,7 +45,7 @@ def extract_sub_qa(files):
     other.writerow(["date", "filesuffix", "SAR", "AcquisitionTime", "TxRefAmp"])
 
     for folder in files:  # os.listdir(os.fsencode("derivatives")):
-        for file in glob(op.join(folder, 'func', f'sub-{bids_subject}*.json')):
+        for file in glob(op.join(folder, 'func', 'sub-{bids_subject}*.json')):
             sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
             greetings = json.loads(sesame)
 
@@ -62,7 +67,7 @@ def extract_mriqc():
     xie = csv.writer(first_extraction)
     xie.writerow(["date", "filesuffix", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp"])
 
-    for file in glob(op.join(mriqc_path, f'sub-{bids_subject}*.json')):  # os.listdir(os.fsencode("derivatives")):
+    for file in glob(op.join(mriqc_path, 'sub-{bids_subject}*.json')):  # os.listdir(os.fsencode("derivatives")):
         sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
         bids_meta = greetings["bids_meta"]
@@ -87,26 +92,21 @@ def extract_mriqc():
 
 
 def qa_metric_producer(source, output_csv):
-
-    start_date = 49  # index for date that the QA metrics were taken
+    
     destination = open(output_csv, "a")
     product = csv.writer(destination)
 
-    for file in source:  # os.listdir(os.fsencode("derivatives")):
-        sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
+    for item in source:  # os.listdir(os.fsencode("derivatives")):
+        date = re.search('.*/sub-(?P<subj>\w*)/ses-(?P<date>[0-9]+)/.*', source).groupdict()
+        sesame = open(os.fsdecode(item), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
-        bids_meta = greetings["bids_meta"]
+        # bids_meta = greetings["bids_meta"]
 
         # 2018 and later conditions
-        if 'SAR' and "AcquisitionTime" and "TxRefAmp" in bids_meta:
-            if 'snr_total' in greetings:
-                product.writerow([os.fsdecode(file)[start_date:start_date+8],
-                                  os.fsdecode(file)[start_date+9:], greetings['snr_total'], bids_meta["SAR"],
-                                  bids_meta["AcquisitionTime"], bids_meta["TxRefAmp"]])
-            elif 'tsnr' in greetings:
-                product.writerow([os.fsdecode(file)[start_date:start_date+8],
-                                  os.fsdecode(file)[start_date+9:], greetings['tsnr'], bids_meta["SAR"],
-                                  bids_meta["AcquisitionTime"], bids_meta["TxRefAmp"]])
+        if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
+            product.writerow([os.fsdecode(file)[start_date:start_date+8],
+                os.fsdecode(file)[start_date+9:], greetings["tsnr"], greetings["SAR"],
+                greetings["AcquisitionTime"], greetings["TxRefAmp"]])
 
         # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
         else:
@@ -121,9 +121,9 @@ def qa_metric_producer(source, output_csv):
 
 def main(args=None):
     parser = get_opt_parser()
-    (options, inputs) = parser.parse_args(args)
+    (options) = parser.parse_args(args)
 
-    qa_metric_producer(inputs, options.output_csv)
+    qa_metric_producer(options.input, options.output_csv)
 
 
 if __name__ == '__main__':
