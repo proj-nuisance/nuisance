@@ -7,6 +7,7 @@ import os
 import os.path as op
 import json
 import csv
+import re
 
 import sys
 from optparse import OptionParser, Option
