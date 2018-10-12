@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Processing the JSON files in this folder
 # Chris Cheng 2018
