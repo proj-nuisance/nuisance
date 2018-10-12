@@ -27,7 +27,8 @@ def get_opt_parser():
 
     p.add_options([
         Option("-o", "--output",
-               dest="output_csv", default='You didnt say where to write it to',
+               dest="output_csv",
+               #required=True,
                help="Where do you want the extraction to be written to"),
 
         Option("-i", "--input",
