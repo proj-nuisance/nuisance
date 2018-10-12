@@ -113,6 +113,7 @@ def qa_metric_producer(source, output_csv):
         else:
             bids_meta = greetings["bids_meta"]
             if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' in bids_meta:
+                print(item)
                 product.writerow([info["date"], os.fsdecode(item)[49:],
                                   greetings['tsnr'], bids_meta["SAR"],
                                   bids_meta["AcquisitionTime"]])
