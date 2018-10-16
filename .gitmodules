@@ -4,3 +4,6 @@
 [submodule "data/extractions"]
 	path = data/extractions
 	url = ./data/extractions
+[submodule "data/QA-mriqc"]
+	path = data/QA-mriqc
+	url = ./data/QA-mriqc
