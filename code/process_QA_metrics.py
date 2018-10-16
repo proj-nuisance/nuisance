@@ -112,7 +112,7 @@ def qa_metric_producer(source, output_csv):
         # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
         else:
             bids_meta = greetings["bids_meta"]
-            if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' and 'TxRefAmp'in bids_meta:
+            if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in bids_meta:
                 product.writerow([info["date"], os.fsdecode(item)[49:],
                                   greetings['tsnr'], bids_meta["SAR"],
                                   bids_meta["AcquisitionTime"], bids_meta['TxRefAmp']])
