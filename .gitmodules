@@ -7,3 +7,6 @@
 [submodule "data/QA-mriqc"]
 	path = data/QA-mriqc
 	url = ./data/QA-mriqc
+[submodule "data/dbic"]
+	path = data/dbic
+	url = ./data/dbic
