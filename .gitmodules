@@ -10,3 +10,6 @@
 [submodule "data/dbic"]
 	path = data/dbic
 	url = ./data/dbic
+[submodule "code/simple_worflow"]
+	path = code/simple_worflow
+	url = https://github.com/ReproNim/simple_workflow
