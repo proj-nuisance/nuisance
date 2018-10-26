@@ -13,3 +13,6 @@
 [submodule "code/simple_worflow"]
 	path = code/simple_worflow
 	url = https://github.com/ReproNim/simple_workflow
+[submodule "code/test_data"]
+	path = code/test_data
+	url = http://datasets.datalad.org/labs/haxby/life/.git
