@@ -16,3 +16,6 @@
 [submodule "code/simple_workflow"]
        path = code/simple_workflow
        url = https://github.com/ReproNim/simple_workflow
+[submodule "output/simple_workflow-life"]
+	path = output/simple_workflow-life
+	url = ./output/simple_workflow-life
