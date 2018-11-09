@@ -11,7 +11,7 @@
 	path = data/dbic
 	url = ./data/dbic
 [submodule "code/test_data"]
-	path = code/test_data
+	path = data/life
 	url = http://datasets.datalad.org/labs/haxby/life/.git
 [submodule "code/simple_workflow"]
        path = code/simple_workflow
