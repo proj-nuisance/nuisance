@@ -104,9 +104,12 @@ def qa_metric_producer(source, output_csv):
         greetings = json.loads(sesame)
         print(item)  # debugging
         # 2018 and later conditions
+        product.writerow(["Date",
+                          "Filetype", "tsnr", "SAR",
+                          "AcquisitionTime", "TxRefAmp"])
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
             product.writerow([info["date"],
-                os.fsdecode(item)[49:], greetings["tsnr"], greetings["SAR"],
+                os.fsdecode(item)[59:], greetings["tsnr"], greetings["SAR"],
                 greetings["AcquisitionTime"], greetings["TxRefAmp"]])
 
         # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
