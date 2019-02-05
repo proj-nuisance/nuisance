@@ -97,6 +97,8 @@ def qa_metric_producer(source, output_csv):
     
     destination = open(output_csv, "a")
     product = csv.writer(destination)
+    
+    product.writerow(["Date", "Filetype", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp"])
 
     for item in source:  # os.listdir(os.fsencode("derivatives")):
         info = re.search('.*/ses-(?P<date>[0-9]+)/.*', item).groupdict()
@@ -104,9 +106,6 @@ def qa_metric_producer(source, output_csv):
         greetings = json.loads(sesame)
         print(item)  # debugging
         # 2018 and later conditions
-        product.writerow(["Date",
-                          "Filetype", "tsnr", "SAR",
-                          "AcquisitionTime", "TxRefAmp"])
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
             product.writerow([info["date"],
                 os.fsdecode(item)[59:], greetings["tsnr"], greetings["SAR"],
@@ -116,7 +115,7 @@ def qa_metric_producer(source, output_csv):
         else:
             bids_meta = greetings["bids_meta"]
             if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in bids_meta:
-                product.writerow([info["date"], os.fsdecode(item)[49:],
+                product.writerow([info["date"], os.fsdecode(item)[59:],
                                   greetings['tsnr'], bids_meta["SAR"],
                                   bids_meta["AcquisitionTime"], bids_meta['TxRefAmp']])
             else:
