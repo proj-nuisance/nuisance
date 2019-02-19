@@ -1,2 +1,6 @@
 [datalad "dataset"]
 	id = 1a495a66-b20d-11e8-9335-002590f97d84
+[datalad "containers.reproin"]
+	updateurl = shub://ReproNim/reproin:0.5.3
+	image = .datalad/environments/reproin/image
+	cmdexec = singularity exec {img} {cmd}
