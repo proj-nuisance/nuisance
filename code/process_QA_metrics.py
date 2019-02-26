@@ -8,6 +8,8 @@ import os.path as op
 import json
 import csv
 import re
+import datetime
+import time
 
 import sys
 from optparse import OptionParser, Option
@@ -40,68 +42,24 @@ def get_opt_parser():
     return p
 
 
-def extract_sub_qa(files):
-
-    second_extraction = open(op.join("..", "data", "extractions", "subqa_extraction.csv"), "w")
-    other = csv.writer(open(op.join("..", "data", "extractions", "subqa_extraction.csv"), "w"))
-    other.writerow(["date", "filesuffix", "SAR", "AcquisitionTime", "TxRefAmp"])
-
-    for folder in files:  # os.listdir(os.fsencode("derivatives")):
-        for file in glob(op.join(folder, 'func', 'sub-{bids_subject}*.json')):
-            sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
-            greetings = json.loads(sesame)
-
-            if '2018' in os.fsdecode(file):
-                if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
-                    other.writerow([os.fsdecode(file)[47:55], os.fsdecode(file)[56:], greetings["SAR"],
-                                    greetings["AcquisitionTime"], greetings["TxRefAmp"]])
-
-            else:
-                if 'SAR' in greetings["global"]["const"] and "AcquisitionTime" in greetings["time"]["samples"]:
-                    other.writerow([os.fsdecode(file)[47:55], os.fsdecode(file)[56:],
-                                  greetings["global"]["const"]["SAR"], greetings["time"]["samples"]["AcquisitionTime"]])
-    second_extraction.close()
-
-
-def extract_mriqc():
-
-    first_extraction = open(op.join("..", "data", "extractions", "mriqc_extraction.csv"), "w")
-    xie = csv.writer(first_extraction)
-    xie.writerow(["date", "filesuffix", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp"])
-
-    for file in glob(op.join(mriqc_path, 'sub-{bids_subject}*.json')):  # os.listdir(os.fsencode("derivatives")):
-        sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
-        greetings = json.loads(sesame)
-        bids_meta = greetings["bids_meta"]
-
-        if '2017' in os.fsdecode(file):
-            if 'tsnr' in greetings and 'SAR' in bids_meta["global"]["const"] \
-                    and "AcquisitionTime" in bids_meta["time"]["samples"]:
-                xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['tsnr'],
-                              bids_meta["global"]["const"]["SAR"], bids_meta["time"]["samples"]["AcquisitionTime"]])
-
-        elif '2018' in os.fsdecode(file):
-            if 'SAR' and "AcquisitionTime" and "TxRefAmp" in bids_meta:
-                if 'snr_total' in greetings:
-                    xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['snr_total'],
-                                  bids_meta["SAR"], bids_meta["AcquisitionTime"], bids_meta["TxRefAmp"]])
-                elif 'tsnr' in greetings:
-                    xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['tsnr'],
-                              bids_meta["SAR"], bids_meta["AcquisitionTime"],
-                                 bids_meta["TxRefAmp"]])
-
-    first_extraction.close()
+def seconds(input):
+    x = time.strptime(input.split('.')[0],'%H:%M:%S')
+    return int(datetime.timedelta(hours = x.tm_hour, minutes = x.tm_min, seconds = x.tm_sec).total_seconds())
 
 
 def qa_metric_producer(source, output_csv):
     
+    # opening destination CSV file
     destination = open(output_csv, "a")
+
+    # fires up the CSV writer module
     product = csv.writer(destination)
     
+    # WRITES THE HEADER ROW for the CSV
     product.writerow(["Date", "Filetype", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp", "SoftwareVersions", "CSV", "RepetitionTime", 
         "Shim1", "Shim2", "Shim3", "Shim4", "Shim5", "Shim6", "Shim7", "Shim8"])
 
-    for item in source:  # os.listdir(os.fsencode("derivatives")):
+    for item in source:  # os.listdir(os.fsencode("derivatives")):          # for each 
         info = re.search('.*/ses-(?P<date>[0-9]+)/.*', item).groupdict()
         sesame = open(os.fsdecode(item), "r").read()  # open sesameeee
         greetings = json.loads(sesame)
@@ -114,7 +72,7 @@ def qa_metric_producer(source, output_csv):
         if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
             product.writerow([info["date"],
                 os.fsdecode(item)[59:], greetings["tsnr"], greetings["SAR"],
-                greetings["AcquisitionTime"], greetings["TxRefAmp"], bids_meta["SoftwareVersions"],
+                seconds(greetings["AcquisitionTime"]), greetings["TxRefAmp"], bids_meta["SoftwareVersions"],
                 bids_meta["ConversionSoftwareVersion"], bids_meta["RepetitionTime"], 
                 shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7]])
 
@@ -123,7 +81,7 @@ def qa_metric_producer(source, output_csv):
             if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in bids_meta:
                 product.writerow([info["date"], os.fsdecode(item)[59:],
                                   greetings['tsnr'], bids_meta["SAR"],
-                                  bids_meta["AcquisitionTime"], bids_meta['TxRefAmp'], bids_meta["SoftwareVersions"],
+                                  seconds(bids_meta["AcquisitionTime"]), bids_meta['TxRefAmp'], bids_meta["SoftwareVersions"],
                                   bids_meta["ConversionSoftwareVersion"], bids_meta["RepetitionTime"], 
                                   shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7]])
             else:
