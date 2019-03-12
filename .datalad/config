@@ -7,3 +7,6 @@
 [datalad "containers.mriqc"]
 	image = .datalad/environments/mriqc/image
 	cmdexec = singularity exec {img} {cmd}
+[datalad "containers.simple-workflow"]
+	image = .datalad/environments/simple-workflow/image
+	cmdexec = singularity exec {img} {cmd}
