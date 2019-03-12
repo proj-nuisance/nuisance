@@ -102,7 +102,6 @@ def qa_metric_producer(source, output_csv):
                 if int(info["date"]) < 20171030:
                     product.writerow(content)
                 else:
-                    content.append(loaded_anat["snr_total"])
                     product.writerow(content)
             else:
                 print("tsnr, SAR or TxRefAmp are not present.")
