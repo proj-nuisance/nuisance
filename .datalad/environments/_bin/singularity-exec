@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# A shim to take care about running sanitized home etc
+
+bindir=$(dirname $0 | xargs readlink -f)
+#echo "I: bindir=$bindir"
+homedir=$(echo $bindir | xargs dirname )/_home
+topdir=$(echo $bindir | xargs dirname | xargs dirname | xargs dirname )
+
+echo "I: exec'ing with sanitized singularity with"
+echo "I:   HOME=$homedir"
+echo "I:   $topdir bind mounted"
+singularity exec \
+	-H "$homedir" \
+	-B "$topdir:$topdir" \
+	-e \
+	"$@"
