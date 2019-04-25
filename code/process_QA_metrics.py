@@ -8,6 +8,8 @@ import os.path as op
 import json
 import csv
 import re
+import datetime
+import time
 
 import sys
 from optparse import OptionParser, Option
@@ -31,93 +33,131 @@ def get_opt_parser():
                #required=True,
                help="Where do you want the extraction to be written to"),
 
-        Option("-i", "--input",
-               dest="input", default="You didn't say where it was coming from",
-               help="Where do you want the files to be taken from?"),
+        Option("-t", "--type",
+               dest="type", default="func",
+               help="Is the final an anat or func?"),
 
     ])
 
     return p
 
 
-def extract_sub_qa(files):
-
-    second_extraction = open(op.join("..", "data", "extractions", "subqa_extraction.csv"), "w")
-    other = csv.writer(open(op.join("..", "data", "extractions", "subqa_extraction.csv"), "w"))
-    other.writerow(["date", "filesuffix", "SAR", "AcquisitionTime", "TxRefAmp"])
-
-    for folder in files:  # os.listdir(os.fsencode("derivatives")):
-        for file in glob(op.join(folder, 'func', 'sub-{bids_subject}*.json')):
-            sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
-            greetings = json.loads(sesame)
-
-            if '2018' in os.fsdecode(file):
-                if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
-                    other.writerow([os.fsdecode(file)[47:55], os.fsdecode(file)[56:], greetings["SAR"],
-                                    greetings["AcquisitionTime"], greetings["TxRefAmp"]])
-
-            else:
-                if 'SAR' in greetings["global"]["const"] and "AcquisitionTime" in greetings["time"]["samples"]:
-                    other.writerow([os.fsdecode(file)[47:55], os.fsdecode(file)[56:],
-                                  greetings["global"]["const"]["SAR"], greetings["time"]["samples"]["AcquisitionTime"]])
-    second_extraction.close()
-
-
-def extract_mriqc():
-
-    first_extraction = open(op.join("..", "data", "extractions", "mriqc_extraction.csv"), "w")
-    xie = csv.writer(first_extraction)
-    xie.writerow(["date", "filesuffix", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp"])
-
-    for file in glob(op.join(mriqc_path, 'sub-{bids_subject}*.json')):  # os.listdir(os.fsencode("derivatives")):
-        sesame = open(os.fsdecode(file), "r").read()  # open sesameeee
-        greetings = json.loads(sesame)
-        bids_meta = greetings["bids_meta"]
-
-        if '2017' in os.fsdecode(file):
-            if 'tsnr' in greetings and 'SAR' in bids_meta["global"]["const"] \
-                    and "AcquisitionTime" in bids_meta["time"]["samples"]:
-                xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['tsnr'],
-                              bids_meta["global"]["const"]["SAR"], bids_meta["time"]["samples"]["AcquisitionTime"]])
-
-        elif '2018' in os.fsdecode(file):
-            if 'SAR' and "AcquisitionTime" and "TxRefAmp" in bids_meta:
-                if 'snr_total' in greetings:
-                    xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['snr_total'],
-                                  bids_meta["SAR"], bids_meta["AcquisitionTime"], bids_meta["TxRefAmp"]])
-                elif 'tsnr' in greetings:
-                    xie.writerow([os.fsdecode(file)[52:60], os.fsdecode(file)[61:], greetings['tsnr'],
-                              bids_meta["SAR"], bids_meta["AcquisitionTime"],
-                                 bids_meta["TxRefAmp"]])
-
-    first_extraction.close()
+def seconds(input):
+    x = time.strptime(input.split('.')[0],'%H:%M:%S')
+    return int(datetime.timedelta(hours = x.tm_hour, minutes = x.tm_min, seconds = x.tm_sec).total_seconds())
 
 
 def qa_metric_producer(source, output_csv):
     
+    # opening destination CSV file
     destination = open(output_csv, "a")
-    product = csv.writer(destination)
 
-    for item in source:  # os.listdir(os.fsencode("derivatives")):
+    # fires up the CSV writer module
+    product = csv.writer(destination)
+    
+    # WRITES THE HEADER ROW for the CSV
+    product.writerow(["Date", "Filetype", "tsnr", "SAR", "AcquisitionTime", "TxRefAmp", "SoftwareVersions", "CSV", "RepetitionTime", 
+        "Shim1", "Shim2", "Shim3", "Shim4", "Shim5", "Shim6", "Shim7", "Shim8", "IOPD1", "IOPD2", "IOPD3", "IOPD4", "IOPD5", "IOPD6"])
+
+    for item in source:  # os.listdir(os.fsencode("derivatives")):          # for each 
         info = re.search('.*/ses-(?P<date>[0-9]+)/.*', item).groupdict()
-        sesame = open(os.fsdecode(item), "r").read()  # open sesameeee
-        greetings = json.loads(sesame)
-        print(item)  # debugging
+       
+        # FUNC: abbreviations for easier access to certain dicts in the func/.json files
+        func_json = open(os.fsdecode(item), "r").read()  # open sesameeee
+        loaded_func = json.loads(func_json)
+        func_bids = loaded_func["bids_meta"]
+        shim = func_bids["ShimSetting"]
+        IOPD = func_bids["ImageOrientationPatientDICOM"]
+
+        # ANAT: modifying the func code to access the anatomical JSON
+#        if int(info["date"]) >= 20171030:
+#            anat_item = str(item)
+#            anat_item = anat_item[:34] + "anat" + anat_item[38:]
+#            anat_item = anat_item[:59] + "acq-MPRAGE_T1w.json"
+            
+#            print(anat_item)
+            
+#            anat_json = open(os.fsdecode(anat_item), "r").read()
+#            loaded_anat = json.loads(anat_json)
+
+        print(item); # debugging, indicator that a file's been processed
+
         # 2018 and later conditions
-        if 'SAR' and "AcquisitionTime" and "TxRefAmp" in greetings:
+        if 'SAR' and "AcquisitionTime" and "TxRefAmp" in loaded_func:
             product.writerow([info["date"],
-                os.fsdecode(item)[49:], greetings["tsnr"], greetings["SAR"],
-                greetings["AcquisitionTime"], greetings["TxRefAmp"]])
+                os.fsdecode(item)[59:], loaded_func["tsnr"], loaded_func["SAR"],
+                seconds(loaded_func["AcquisitionTime"]), loaded_func["TxRefAmp"], func_bids["SoftwareVersions"],
+                func_bids["ConversionSoftwareVersion"], func_bids["RepetitionTime"], 
+                shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7], IOPD[0], IOPD[1], IOPD[2], IOPD[3], IOPD[4], IOPD[5]])
 
         # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
         else:
-            bids_meta = greetings["bids_meta"]
-            if 'tsnr' in greetings and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in bids_meta:
-                product.writerow([info["date"], os.fsdecode(item)[49:],
-                                  greetings['tsnr'], bids_meta["SAR"],
-                                  bids_meta["AcquisitionTime"], bids_meta['TxRefAmp']])
+            if 'tsnr' in loaded_func and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in func_bids:
+                content = [info["date"], os.fsdecode(item)[59:], loaded_func['tsnr'], func_bids["SAR"],
+                    seconds(func_bids["AcquisitionTime"]), func_bids['TxRefAmp'], func_bids["SoftwareVersions"],
+                    func_bids["ConversionSoftwareVersion"], func_bids["RepetitionTime"], 
+                    shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7],
+                    IOPD[0], IOPD[1], IOPD[2], IOPD[3], IOPD[4], IOPD[5]] 
+                
+                if int(info["date"]) < 20171030:
+                    product.writerow(content)
+                else:
+                    product.writerow(content)
             else:
-                product.writerow("something went wrong")
+                print("tsnr, SAR or TxRefAmp are not present.")
+
+    destination.close()
+
+
+def anat_metric_producer(source, output_csv):
+    
+    # opening destination CSV file
+    destination = open(output_csv, "a")
+
+    # fires up the CSV writer module
+    product = csv.writer(destination)
+    
+    # WRITES THE HEADER ROW for the CSV
+    product.writerow(["Date", "Filetype", "snr_total", "SAR", "AcquisitionTime", "TxRefAmp", "SoftwareVersions", "CSV", "RepetitionTime", 
+        "Shim1", "Shim2", "Shim3", "Shim4", "Shim5", "Shim6", "Shim7", "Shim8", "IOPD1", "IOPD2", "IOPD3", "IOPD4", "IOPD5", "IOPD6"])
+
+    for item in source:  # os.listdir(os.fsencode("derivatives")):          # for each 
+        info = re.search('.*/ses-(?P<date>[0-9]+)/.*', item).groupdict()
+       
+        # FUNC: abbreviations for easier access to certain dicts in the func/.json files
+        func_json = open(os.fsdecode(item), "r").read()  # open sesameeee
+        loaded_func = json.loads(func_json)
+        func_bids = loaded_func["bids_meta"]
+        shim = func_bids["ShimSetting"]
+        IOPD = func_bids["ImageOrientationPatientDICOM"]
+
+        print(item); # debugging, indicator that a file's been processed
+
+        # 2018 and later conditions
+        if 'SAR' and "AcquisitionTime" and "TxRefAmp" in func_bids:
+            product.writerow([info["date"],
+                os.fsdecode(item)[59:], loaded_func["snr_total"], func_bids["SAR"],
+                seconds(func_bids["AcquisitionTime"]), func_bids["TxRefAmp"], func_bids["SoftwareVersions"],
+                func_bids["ConversionSoftwareVersion"], func_bids["RepetitionTime"], 
+                shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7],
+                IOPD[0], IOPD[1], IOPD[2], IOPD[3], IOPD[4], IOPD[5]])
+        
+        # pre 2018 conditions, DOESN'T have TxRefAmp and different location for the other parameters
+        else:
+            if 'snr_total' in loaded_func and 'SAR' and 'AcquisitionTime' and 'TxRefAmp' in func_bids:
+                content = [info["date"], os.fsdecode(item)[59:], func_bids['snr_total'], func_bids["SAR"],
+                    seconds(func_bids["AcquisitionTime"]), func_bids['TxRefAmp'], func_bids["SoftwareVersions"],
+                    func_bids["ConversionSoftwareVersion"], func_bids["RepetitionTime"], 
+                    shim[0], shim[1], shim[2], shim[3], shim[4], shim[5], shim[6], shim[7],
+                    IOPD[0], IOPD[1], IOPD[2], IOPD[3], IOPD[4], IOPD[5]] 
+                
+                if int(info["date"]) < 20171030:
+                    product.writerow(content)
+                else:
+                    content.append(loaded_anat["snr_total"])
+                    product.writerow(content)
+            else:
+                print("snr_total, SAR or TxRefAmp are not present.")
 
     destination.close()
 
@@ -126,7 +166,13 @@ def main(args=None):
     parser = get_opt_parser()
 
     (options, source) = parser.parse_args(args)
-    qa_metric_producer(source, options.output_csv)
+
+    if options.type == "func":
+        qa_metric_producer(source, options.output_csv)
+    elif options.type == "anat":
+        anat_metric_producer(source, options.output_csv)
+    else:
+        print("TYPE provided MUST be either anat or func")
 
 
 if __name__ == '__main__':
