@@ -13,6 +13,9 @@
 [submodule "code/test_data"]
 	path = data/life
 	url = http://datasets.datalad.org/labs/haxby/life/.git
+[submodule "irb"]
+	path = irb
+	url = ./irb
 [submodule "code/simple_workflow"]
        path = code/simple_workflow
        url = https://github.com/ReproNim/simple_workflow
