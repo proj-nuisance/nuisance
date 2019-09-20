@@ -136,10 +136,10 @@ def regress(target_variable, model_df, plot=True, print_summary=True):
 
     for variable in significant_variables:
 
-        X2 = model_df.copy(True) # prepare for mods
-        X2 = X2[model_vars]
-        X2 = sm.add_constant(X2)
+        X2 = X.copy(True) # prepare for mods
 
+        # TODO: verify that variables tested via F-test (seasonal, IOPD)
+        # are not excluded if significant
         for col in X2:
             if col != variable:
                 X2[col] = 0
