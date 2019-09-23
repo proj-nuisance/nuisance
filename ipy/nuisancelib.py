@@ -59,14 +59,27 @@ def add_seasonal_simple(df, col='Date', start='2017-01-01'):
     df['Seasonal (cos)'] = np.cos(time_delta_rad)
 
 
-def Ftest(model, var_prefix):
+def Ftest(model, var_prefix, queue, prints):
     var_columns = [c for c in model.params.index if c.startswith(var_prefix)]
+    
     if var_columns:
         f_test = model.f_test(' = '.join(var_columns) + " = 0")
-        print("%s F-test: %s" % (var_prefix, f_test))
+        
+        if f_test.pvalue < 0.05:
+            if var_prefix == "Shim":
+                for i in range(8):
+                    queue.append("Shim" + str(i+1))
+            elif var_prefix == "IOPD":
+                for i in range(6):
+                    queue.append("IOPD" + str(i+1))
+                    
+        if prints:
+            print("%s F-test: %s" % (var_prefix, f_test))
         return f_test
+    
     else:
-        print("No %s variables in the model" % var_prefix)
+        if prints:
+            print("No %s variables in the model" % var_prefix)
         return None
 
 
@@ -117,17 +130,17 @@ def regress(target_variable, model_df, plot=True, print_summary=True):
     model = sm.OLS(y, X).fit()
     predictions = model.predict(X)
     
-    
-    
     ################ CODE FOR TESTING INDIVIDUAL VARIABLE EFFECTS ####################
-    significant_variables = [] 
+    significant_variables = []
+    F_shim = Ftest(model, 'Shim', significant_variables, print_summary)
+    F_IOPD = Ftest(model, 'IOPD', significant_variables, print_summary)
+    F_seasonal = Ftest(model, 'Seasonal', significant_variables, print_summary)
     
     # get p-values
     for key, value in dict(model.pvalues).items():
-        if value < 0.05 or key.lower() == 'const':
+        if key not in significant_variables and value < 0.05 or key.lower() == 'const':
             # identify statistically insignificant variables in df
             significant_variables.append(key)
-    
     
     
     ######## set statistically insignificant variables to 0, then predict
@@ -194,10 +207,6 @@ def regress(target_variable, model_df, plot=True, print_summary=True):
     if print_summary:
         print(model.summary())
     # print(model.pvalues['snr_total_qa'])
-    
-    F_shim = Ftest(model, 'Shim')
-    F_IOPD = Ftest(model, 'IOPD')
-    F_seasonal = Ftest(model, 'Seasonal')
     return model
 
 
