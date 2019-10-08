@@ -83,7 +83,27 @@ def Ftest(model, var_prefix, queue, prints):
         return None
 
 
-def regress(target_variable, model_df, plot=True, print_summary=True):
+# copy pasted from nipy function, renamed from _orthogonalize
+def orthogonalize(X):
+    """ Orthogonalize every column of design `X` w.r.t preceding columns
+    Parameters
+    ----------
+    X: array of shape(n, p), the data to be orthogonalized
+    Returns
+    -------
+    X: after orthogonalization
+    Notes
+    -----
+    X is changed in place. the columns are not normalized
+    """
+    if X.size == X.shape[0]:
+        return X
+    for i in range(1, X.shape[1]):
+        X[:, i] -= np.dot(X[:, i], np.dot(X[:, :i], np.linalg.pinv(X[:, :i])))
+    return X
+
+
+def regress(target_variable, model_df, plot=True, print_summary=True, qa = True):
     # creates a regression graph plotted against actual data from certain QA metrics
     #      target_variable: takes str value of either snr_total or tsnr to model against
     #      model_df       : takes pandas DataFrame with data to be used for predictive modeling
@@ -99,8 +119,25 @@ def regress(target_variable, model_df, plot=True, print_summary=True):
     
     
     ########## Converting date to a format that can be parsed by statsmodels API
+    model_df = model_df.copy()
     model_df['Date'] = pd.to_datetime(model_df['Date'], format="%Y%m%d")
-    model_df['Date2'] = model_df['Date'].map(pd.datetime.toordinal)
+    model_df['Date'] = model_df['Date'].map(pd.datetime.toordinal)
+    
+    if qa:
+        # preparing model_df for orthogonalization
+        cols = ['Date', 'AcquisitionTime', 'RepetitionTime', 'SAR', 'TxRefAmp', 'Shim1', 'Shim2', 'Shim3', 'Shim4', 'Shim5', 
+                'Shim6', 'Shim7', 'Shim8', 'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6', target_variable]
+        model_df = model_df[cols]
+        orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
+        cols = cols[:-1] # remove target variable from column list
+
+        # orthogonalize dataframe after its conversion to NumPy array, then convert back and replace in original model_df
+        model_array = orthogonalize(orthogonalized_df.as_matrix())
+        orthogonalized_df = pd.DataFrame(model_array)
+        orthogonalized_df.columns = [cols]
+        for col in cols:
+            model_df[col] = orthogonalized_df[col]
+    
     
     # There is apparently a sample date (20170626) with SAR being unknown None/NaN
     # For now we will just filter out those samples
@@ -218,8 +255,7 @@ def scrape_var_significance(targets, p_var, df):
         input_df = pd.DataFrame(df,columns=['Date', 'sid', 'ses', target, 'age', 'tsnr',
                                              'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 
                                              'IOPD4_real', 'IOPD5_real', 'IOPD6_real', 'sind', 'PatientWeight'])
-        model = regress(target, input_df, plot=False, print_summary=False)
+        model = regress(target, input_df, plot=False, print_summary=False, qa=False)
         result.loc[len(result)] = [target, model.pvalues[p_var], model.rsquared]
         
     return result
-
