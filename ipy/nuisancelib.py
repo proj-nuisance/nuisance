@@ -59,7 +59,7 @@ def add_seasonal_simple(df, col='Date', start='2017-01-01'):
     df['Seasonal (cos)'] = np.cos(time_delta_rad)
 
 
-def Ftest(model, var_prefix, queue, prints):
+def Ftest(model, var_prefix, queue, prints=False):
     var_columns = [c for c in model.params.index if c.startswith(var_prefix)]
     
     if var_columns:
@@ -248,14 +248,19 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True)
 
 
 def scrape_var_significance(targets, p_var, df):
+    dummy = [] # dud list for Seasonal f test comparison
     columns = ['Variable', p_var + ' p value', 'R2 value']
     result = pd.DataFrame(columns = columns)
     
     for target in targets:
         input_df = pd.DataFrame(df,columns=['Date', 'sid', 'ses', target, 'age', 'tsnr',
                                              'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 
-                                             'IOPD4_real', 'IOPD5_real', 'IOPD6_real', 'sind', 'PatientWeight'])
+                                             'IOPD4_real', 'IOPD5_real', 'IOPD6_real', 'sex_male', 'PatientWeight'])
         model = regress(target, input_df, plot=False, print_summary=False, qa=False)
-        result.loc[len(result)] = [target, model.pvalues[p_var], model.rsquared]
+        
+        if p_var == 'Seasonal':
+            result.loc[len(result)] = [target, Ftest(model, 'Seasonal', dummy).pvalue, model.rsquared]
+        else:
+            result.loc[len(result)] = [target, model.pvalues[p_var], model.rsquared]
         
     return result
