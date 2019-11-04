@@ -103,7 +103,7 @@ def orthogonalize(X):
     return X
 
 
-def regress(target_variable, model_df, plot=True, print_summary=True, qa = True):
+def regress(target_variable, model_df, plot=True, print_summary=True, qa = True, real_data = False):
     # creates a regression graph plotted against actual data from certain QA metrics
     #      target_variable: takes str value of either snr_total or tsnr to model against
     #      model_df       : takes pandas DataFrame with data to be used for predictive modeling
@@ -113,13 +113,13 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True)
         return "DataFrame must be of type pandas.core.frame.DataFrame"
     
     
-    
     ########## adding seasonal curves to the model
     add_seasonal_simple(model_df)
     
     
     ########## Converting date to a format that can be parsed by statsmodels API
     model_df = model_df.copy()
+    date_df = model_df['Date']
     model_df['Date'] = pd.to_datetime(model_df['Date'], format="%Y%m%d")
     model_df['Date'] = model_df['Date'].map(pd.datetime.toordinal)
     
@@ -127,16 +127,22 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True)
         # preparing model_df for orthogonalization
         cols = ['Date', 'AcquisitionTime', 'RepetitionTime', 'SAR', 'TxRefAmp', 'Shim1', 'Shim2', 'Shim3', 'Shim4', 'Shim5', 
                 'Shim6', 'Shim7', 'Shim8', 'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6', target_variable]
-        model_df = model_df[cols]
-        orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
-        cols = cols[:-1] # remove target variable from column list
+    
+    elif real_data:
+        cols = ['Date', 'age', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 
+                'IOPD6_real', 'sex_male', 'PatientWeight', 'Seasonal (sin)', 'Seasonal (cos)', 'snr_total_qa', target_variable]
+    
+    model_df = model_df[cols]
+    orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
+    cols = cols[:-1] # remove target variable from column list
 
-        # orthogonalize dataframe after its conversion to NumPy array, then convert back and replace in original model_df
-        model_array = orthogonalize(orthogonalized_df.as_matrix())
-        orthogonalized_df = pd.DataFrame(model_array)
-        orthogonalized_df.columns = [cols]
-        for col in cols:
-            model_df[col] = orthogonalized_df[col]
+    # orthogonalize dataframe after its conversion to NumPy array, then convert back and replace in original model_df
+    model_array = orthogonalize(orthogonalized_df.as_matrix())
+    orthogonalized_df = pd.DataFrame(model_array)
+    orthogonalized_df.columns = [cols]
+    for col in cols:
+        model_df[col] = orthogonalized_df[col]
+    model_df['Date'] = date_df
     
     
     # There is apparently a sample date (20170626) with SAR being unknown None/NaN
