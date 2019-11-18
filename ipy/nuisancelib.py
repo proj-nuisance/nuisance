@@ -249,6 +249,8 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     # giving additional data
     if print_summary:
         print(model.summary())
+        print("AIC: " + str(model.aic))
+        print("BIC: " + str(model.bic))
     # print(model.pvalues['snr_total_qa'])
     return model
 
