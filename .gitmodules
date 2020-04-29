@@ -10,6 +10,7 @@
 [submodule "data/dbic"]
 	path = data/dbic
 	url = ./data/dbic
+	distribution-restrictions = sensitive
 [submodule "code/test_data"]
 	path = data/life
 	url = http://datasets.datalad.org/labs/haxby/life/.git
