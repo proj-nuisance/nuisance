@@ -10,6 +10,7 @@ import csv
 import re
 import datetime
 import time
+import tarfile
 
 import sys
 from optparse import OptionParser, Option
@@ -43,7 +44,7 @@ def get_opt_parser():
     return p
 
 
-def extract_parameter(source, parameters, output_csv):
+def extract_parameter(source, parameter, output_csv):
     
     # opening destination CSV file
     destination = open(output_csv, "a")
@@ -53,7 +54,7 @@ def extract_parameter(source, parameters, output_csv):
     
     # WRITES THE HEADER ROW for the CSV
     header = ["Date", "sid", "ses"]
-    header.append(parameters)
+    header.append(parameter)
     product.writerow(header)
 
     for item in source:  # os.listdir(os.fsencode("derivatives")):          # for each
@@ -67,10 +68,16 @@ def extract_parameter(source, parameters, output_csv):
         info.update(sid)
 
         # FUNC: abbreviations for easier access to certain dicts in the func/.json files
+        if item.endswith('.dcm'):
+            item_to_read = item
+        else: # we assume it is a tarball and will read the first from it
+            dicoms = tarfile.open(item, 'r')
+            item_to_read = dicoms.extractfile(next(dicoms.getmembers()))
+
         ds = pydicom.dcmread(item)
-        weight = ds.PatientWeight
+        value = getattr(ds, parameter)
         
-        product.writerow([info["date"], "sub-sid" + info["sid"], info["ses"], weight])
+        product.writerow([info["date"], "sub-sid" + info["sid"], info["ses"], value])
         
     destination.close()
 
