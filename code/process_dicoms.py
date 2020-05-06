@@ -47,7 +47,7 @@ def get_opt_parser():
 def extract_parameter(source, parameter, output_csv):
     
     # opening destination CSV file
-    destination = open(output_csv, "a")
+    destination = open(output_csv, "w")
 
     # fires up the CSV writer module
     product = csv.writer(destination)
@@ -72,9 +72,11 @@ def extract_parameter(source, parameter, output_csv):
             item_to_read = item
         else: # we assume it is a tarball and will read the first from it
             dicoms = tarfile.open(item, 'r')
-            item_to_read = dicoms.extractfile(next(dicoms.getmembers()))
+            item_to_read = dicoms.extractfile(
+                    dicoms.getmembers()[0]
+            )
 
-        ds = pydicom.dcmread(item)
+        ds = pydicom.dcmread(item_to_read, stop_before_pixels=True)
         value = getattr(ds, parameter)
         
         product.writerow([info["date"], "sub-sid" + info["sid"], info["ses"], value])
