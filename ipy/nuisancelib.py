@@ -5,6 +5,8 @@ import seaborn as sns
 import statsmodels.api as sm
 import datetime as dt
 
+from pylab import savefig
+
 
 # FUNCTIONS YOU CAN USE:
 #     analyses(filepath) spits out a nifty heatmap to let you check correlation between variables
@@ -47,7 +49,11 @@ def analyses(filepath):
     print("All Conversion Softwares are the same: " + str(valid))
     
     # SECOND CHECK: HEATMAP
-    sns.heatmap(files.corr(), cmap=sns.diverging_palette(h_neg=240, h_pos=10, n=9, sep=1, center="dark"), center=0)
+    figure = sns.heatmap(files.corr(), cmap=sns.diverging_palette(h_neg=240, h_pos=10, n=9, sep=1, center="dark"), center=0)
+    figure
+    
+    save = figure.get_figure()    
+    save.savefig('heatmap.svg', pad_inches = 0.1)
 
 
 
@@ -245,6 +251,7 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
         ax_partial.legend(['partial fit'])
     
     ax.legend(['actual', 'full fit'], loc='upper left')
+    plt.savefig("test.svg")
     
     # giving additional data
     if print_summary:
