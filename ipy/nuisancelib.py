@@ -131,23 +131,25 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     
     if qa:
         # preparing model_df for orthogonalization
-        cols = ['Date', 'AcquisitionTime', 'RepetitionTime', 'SAR', 'TxRefAmp', 'Shim1', 'Shim2', 'Shim3', 'Shim4', 'Shim5', 
-                'Shim6', 'Shim7', 'Shim8', 'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6', target_variable]
+        cols = ['Date', 'AcquisitionTime', 'SAR', 'TxRefAmp','IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 
+                'IOPD5', 'IOPD6', 'Seasonal (sin)', 'Seasonal (cos)', target_variable]
     
     elif real_data:
-        cols = ['Date', 'age', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 
-                'IOPD6_real', 'sex_male', 'PatientWeight', 'Seasonal (sin)', 'Seasonal (cos)', 'snr_total_qa', target_variable]
+        cols = ['Date', 'age', 'sex_male', 'PatientWeight', 'Seasonal (sin)', 'Seasonal (cos)', 
+                'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 
+                'IOPD6_real', target_variable]
     
     model_df = model_df[cols]
     orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
     cols = cols[:-1] # remove target variable from column list
 
     # orthogonalize dataframe after its conversion to NumPy array, then convert back and replace in original model_df
-    model_array = orthogonalize(orthogonalized_df.as_matrix())
+    model_array = orthogonalize(orthogonalized_df.to_numpy())
     orthogonalized_df = pd.DataFrame(model_array)
     orthogonalized_df.columns = [cols]
+    print(type(orthogonalized_df))
     for col in cols:
-        model_df[col] = orthogonalized_df[col]
+        model_df.loc[:, col] = orthogonalized_df.loc[:, col]
     model_df['Date'] = date_df
     
     
