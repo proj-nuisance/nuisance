@@ -129,6 +129,7 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     model_df['Date'] = pd.to_datetime(model_df['Date'], format="%Y%m%d")
     model_df['Date'] = model_df['Date'].map(pd.datetime.toordinal)
     
+    f_tests_todo = ['IOPD', 'Seasonal']
     if qa:
         # preparing model_df for orthogonalization
         cols = ['Date', 'AcquisitionTime', 'SAR', 'TxRefAmp','IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 
@@ -138,6 +139,7 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
         cols = ['Date', 'age', 'sex_male', 'PatientWeight', 'Seasonal (sin)', 'Seasonal (cos)', 
                 'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 
                 'IOPD6_real', target_variable]
+        f_tests_todo += ['Shim']
     
     model_df = model_df[cols]
     orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
@@ -183,9 +185,10 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     
     ################ CODE FOR TESTING INDIVIDUAL VARIABLE EFFECTS ####################
     significant_variables = []
-    F_shim = Ftest(model, 'Shim', significant_variables, print_summary)
-    F_IOPD = Ftest(model, 'IOPD', significant_variables, print_summary)
-    F_seasonal = Ftest(model, 'Seasonal', significant_variables, print_summary)
+    F_tests_pvals = {
+       v: Ftest(model, v, significant_variables, print_summary)
+       for v in f_tests_todo
+    }
     
     # get p-values
     for key, value in dict(model.pvalues).items():
@@ -255,6 +258,23 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     ax.legend(['actual', 'full fit'], loc='upper left')
     plt.savefig("test.svg")
     
+    outvars = {}
+    for var in cols:
+        is_f_test = False
+        for f_test in f_tests_todo:
+           if var.startswith(f_test):
+              is_f_test = True
+              break
+        if is_f_test:
+           continue
+        var_pvalue = getattr(model.pvals, var)
+        outvars[var] = pvalue
+   
+    outvars.update(f_tests_pvals)
+    # Do FDR here and then print it all 
+    for var, pvalue in outvars.items():
+        pass
+
     # giving additional data
     if print_summary:
         print(model.summary())
