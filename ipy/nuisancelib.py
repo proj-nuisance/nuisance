@@ -286,13 +286,11 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     FDR_tuple = fdrcorrection(list(outvars.values())) # actual FDR test conduct
     t_f = list(FDR_tuple[0]) # split tuple into true/false array
     FDR_pvals = list(FDR_tuple[1]) # split tuple into p value array
-    count = 0 # count for assigning values, iterated over in the for loop below
     
     print("FDR-corrected p-values:")
-    for var, value in outvars.items():
-        print("%15s | Original p-value: " % var + "%20s" % str(value) +
-              " | FDR-corrected p-value: " + str(FDR_pvals[count]) + ", " + str(t_f[count]))
-        count += 1
+    for (var, value), fdr_pval, is_sign in zip(outvars.items(), FDR_pvals, t_f):
+        print("%15s | Original  p-value: %8.3g" % (var, value) +
+              " | FDR-corrected p-value: %8.3g%s" % (fdr_pval, '**' if is_sign else ''))
     print("\n")
 
     # giving additional data
