@@ -150,12 +150,15 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     model_array = orthogonalize(orthogonalized_df.to_numpy())
     orthogonalized_df = pd.DataFrame(model_array)
     orthogonalized_df.columns = [cols]
+    orthogonalized_df['snr_total'] = pd.Series(model_df['snr_total'])
+    model_df = orthogonalized_df
     
-    # HERE problem child HERE
-    for col in cols:
-        model_df.loc[:, col] = orthogonalized_df.loc[:, col]
-    # HERE problem child HERE
-    model_df['Date'] = date_df
+#     for col in cols:
+#         model_df.loc[:, col] = orthogonalized_df.loc[:, col]
+    model_df.columns=[x[0] for x in model_df.columns]
+    model_df['Date'] = pd.to_datetime(model_df['Date'])
+    print(model_df.to_string())
+    model_df.merge(date_df, on='Date', how='right')
     
     
     # There is apparently a sample date (20170626) with SAR being unknown None/NaN
