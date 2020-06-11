@@ -110,11 +110,16 @@ def orthogonalize(X):
     return X
 
 
-def regress(target_variable, model_df, plot=True, print_summary=True, qa = True, real_data = False):
-    # creates a regression graph plotted against actual data from certain QA metrics
-    #      target_variable: takes str value of either snr_total or tsnr to model against
-    #      model_df       : takes pandas DataFrame with data to be used for predictive modeling
-    #      plot           : boolean to turn the plotted graph on/off
+def regress(target_variable, model_df, plot=True, print_summary=True, add_qa=True, add_seasonal=True, real_data=False):
+    """
+    creates a regression graph plotted against actual data from certain QA metrics
+
+    Parameters
+    ----------
+       target_variable: takes str value of either snr_total or tsnr to model against
+       model_df       : takes pandas DataFrame with data to be used for predictive modeling
+       plot           : boolean to turn the plotted graph on/off
+    """
     
     if type(model_df) is not pd.core.frame.DataFrame:
         return "DataFrame must be of type pandas.core.frame.DataFrame"
@@ -130,17 +135,29 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     model_df['Date'] = pd.to_datetime(model_df['Date'], format="%Y%m%d")
     model_df['Date'] = model_df['Date'].map(pd.datetime.toordinal)
     
-    f_tests_todo = ['IOPD', 'Seasonal']
+    f_tests_todo = ['IOPD']
     excluded_cols = ['Date', 'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6', 'Seasonal (sin)', 'Seasonal (cos)']
-    if qa:
+    seasonal_cols = ['Seasonal (sin)', 'Seasonal (cos)',]
+
+    cols = ['Date']
+    if not real_data:
         # preparing model_df for orthogonalization
-        cols = ['Date', 'AcquisitionTime', 'SAR', 'TxRefAmp','IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 
-                'IOPD5', 'IOPD6', 'Seasonal (sin)', 'Seasonal (cos)', target_variable]
-    
-    elif real_data:
-        cols = ['Date', 'age', 'sex_male', 'PatientWeight', 'Seasonal (sin)', 'Seasonal (cos)',
-                'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 
-                'IOPD6_real', target_variable]
+        cols += ['AcquisitionTime', 'SAR', 'TxRefAmp',
+                'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6']
+        if add_seasonal:
+            cols += seasonal_cols
+    else:
+        cols += ['age', 'sex_male', 'PatientWeight',]
+        if add_seasonal:
+            cols += seasonal_cols
+        if add_qa:
+            cols += ['snr_total_qa']
+        cols += ['IOPD1_real', 'IOPD2_real', 'IOPD3_real', 'IOPD4_real', 'IOPD5_real', 'IOPD6_real']
+
+    if add_seasonal:
+        f_tests_todo += ['Seasonal']
+               
+    cols.append(target_variable)
     
     model_df = model_df[cols]
    
@@ -224,6 +241,43 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     
     ################ END CODE FOR TESTING INDIVIDUAL VARIABLE EFFECTS ####################
     
+    # Functionality for carrying out FDR correction
+    outvars = {} # dict containing all predictive variables and their p values from the model
+    
+    for var in cols:
+        is_f_test = False
+        
+        for f_test in f_tests_todo:
+           if var.startswith(f_test):
+              is_f_test = True
+              break
+            
+        if is_f_test:
+           continue
+        
+        if var not in excluded_cols:
+            var_pvalue = getattr(model.pvalues, var)
+            outvars[var] = var_pvalue
+   
+    outvars.update(F_tests_pvals) # add previously conducted F test p values to the outvars
+
+    FDR_tuple = fdrcorrection(list(outvars.values())) # actual FDR test conduct
+    t_f = list(FDR_tuple[0]) # split tuple into true/false array
+    FDR_pvals = list(FDR_tuple[1]) # split tuple into p value array
+    
+    print("FDR-corrected p-values:")
+    for (var, value), fdr_pval, is_sign in zip(outvars.items(), FDR_pvals, t_f):
+        print("%15s | Original  p-value: %8.3g" % (var, value) +
+              " | FDR-corrected p-value: %8.3g%s" % (fdr_pval, '**' if is_sign else ''))
+    print("\n")
+
+    # giving additional data
+    if print_summary:
+        print(model.summary())
+        print("AIC: " + str(model.aic))
+        print("BIC: " + str(model.bic))
+    # print(model.pvalues['snr_total_qa'])
+    
     if not plot:
         return model
     
@@ -264,42 +318,6 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     ax.legend(['actual', 'full fit'], loc='upper left')
     plt.savefig("test.svg")
     
-    # Functionality for carrying out FDR correction
-    outvars = {} # dict containing all predictive variables and their p values from the model
-    
-    for var in cols:
-        is_f_test = False
-        
-        for f_test in f_tests_todo:
-           if var.startswith(f_test):
-              is_f_test = True
-              break
-            
-        if is_f_test:
-           continue
-        
-        if var not in excluded_cols:
-            var_pvalue = getattr(model.pvalues, var)
-            outvars[var] = var_pvalue
-   
-    outvars.update(F_tests_pvals) # add previously conducted F test p values to the outvars
-
-    FDR_tuple = fdrcorrection(list(outvars.values())) # actual FDR test conduct
-    t_f = list(FDR_tuple[0]) # split tuple into true/false array
-    FDR_pvals = list(FDR_tuple[1]) # split tuple into p value array
-    
-    print("FDR-corrected p-values:")
-    for (var, value), fdr_pval, is_sign in zip(outvars.items(), FDR_pvals, t_f):
-        print("%15s | Original  p-value: %8.3g" % (var, value) +
-              " | FDR-corrected p-value: %8.3g%s" % (fdr_pval, '**' if is_sign else ''))
-    print("\n")
-
-    # giving additional data
-    if print_summary:
-        print(model.summary())
-        print("AIC: " + str(model.aic))
-        print("BIC: " + str(model.bic))
-    # print(model.pvalues['snr_total_qa'])
     return model
 
 
@@ -312,7 +330,7 @@ def scrape_var_significance(targets, p_var, df):
         input_df = pd.DataFrame(df,columns=['Date', 'sid', 'ses', target, 'age', 'tsnr',
                                              'snr_total_qa', 'IOPD1_real', 'IOPD2_real', 'IOPD3_real', 
                                              'IOPD4_real', 'IOPD5_real', 'IOPD6_real', 'sex_male', 'PatientWeight'])
-        model = regress(target, input_df, plot=False, print_summary=False, qa=False, real_data=True)
+        model = regress(target, input_df, plot=False, print_summary=False, real_data=True)
         
         if p_var == 'Seasonal':
             result.loc[len(result)] = [target, Ftest(model, 'Seasonal', dummy).pvalue, model.rsquared]
