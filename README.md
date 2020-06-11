@@ -47,21 +47,21 @@ code/process_segstats.py [address of segstat info]
 - [`QA`](data/QA):
 This folder contains the QA data for DBIC MRI data.
 
-- ['extractions'](data/extractions):
+- [`extractions`](data/extractions):
 This folder contains CSV files with preprocessing scripts outputting the extracted data from QA and DBIC.
 
-- ['QA-mriqc'](data/QA-mriqc):
+- [`QA-mriqc`](data/QA-mriqc):
 This folder contains fMRI QA data.
 
-- ['dbic'](data/dbic):
-This folder contains real human data from the DBIC and a folder, ['scripts'](data/dbic/scripts), that processes that data by converting data to a BIDS format using heudiconv and extracting certain additional features such as patient weight and the date the data was recorded.
+- [`dbic`](data/dbic):
+This folder contains real human data from the DBIC and a folder, [`scripts`](data/dbic/scripts), that processes that data by converting data to a BIDS format using heudiconv and extracting certain additional features such as patient weight and the date the data was recorded.
 
 ### `ipy/`
-- ['nuisance_QA_data.ipynb'](ipy/nuisance_QA_data.ipynb):
+- [`nuisance_QA_data.ipynb`](ipy/nuisance_QA_data.ipynb):
 This Jupyter Notebook file carries out exploratory data analyses on extracted QA data.
 
-- ['nuisance_real_data.ipynb'](ipy/nuisance_real_data.ipynb):
+- [`nuisance_real_data.ipynb`](ipy/nuisance_real_data.ipynb):
 This Jupyter Notebook file carries out data analyses on extracted QA data and real data.
 
-- ['nuisancelib.py'](ipy/nuisancelib.py):
+- [`nuisancelib.py`](ipy/nuisancelib.py):
 This Python script contains all the files for building models, including orthogonalization, creating regression models, conducting F-tests, etc.
