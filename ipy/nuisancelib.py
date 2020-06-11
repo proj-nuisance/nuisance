@@ -143,9 +143,19 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
                 'IOPD6_real', target_variable]
     
     model_df = model_df[cols]
+   
+    # There is apparently a sample date (20170626) with SAR being unknown None/NaN
+    # For now we will just filter out those samples
+    if 'SAR' in model_df.columns:
+        finite_SAR = np.isfinite(model_df['SAR'])
+        if not np.all(finite_SAR):
+            print("Following dates didn't have SAR, excluding them: %s" % str(model_df['Date'][~finite_SAR]))
+            model_df = model_df[finite_SAR]
+    
+
     orthogonalized_df = model_df.drop(target_variable, axis=1)  # avoid orthogonalizing target variable
     cols = cols[:-1] # remove target variable from column list
-
+    
     # orthogonalize dataframe after its conversion to NumPy array, then convert back and replace in original model_df
     model_array = orthogonalize(orthogonalized_df.to_numpy())
     orthogonalized_df = pd.DataFrame(model_array)
@@ -158,15 +168,6 @@ def regress(target_variable, model_df, plot=True, print_summary=True, qa = True,
     model_df['Date'] = pd.to_datetime(model_df['Date'])
     model_df = model_df.drop('Date', axis=1) 
     model_df['Date'] = date_df
-    
-    
-    # There is apparently a sample date (20170626) with SAR being unknown None/NaN
-    # For now we will just filter out those samples
-    if 'SAR' in model_df.columns:
-        finite_SAR = np.isfinite(model_df['SAR'])
-        if not np.all(finite_SAR):
-            print("Following dates didn't have SAR, excluding them: %s" % str(model_df['Date'][~finite_SAR]))
-            model_df = model_df[finite_SAR]
     
     
     ########## Assigning independent and dependent variables
