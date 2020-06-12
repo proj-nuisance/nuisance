@@ -5,6 +5,8 @@ This repository contains preprocessing and analysis scripts for a paper pending 
 
 This dataset is available through [DataLad](http://datasets.datalad.org/?dir=/dbic).
 
+For guaranteed reproducibility you should start up a conda environment with the specifications listed in `ipy/conda-requirements.yml`.
+
 ## Setting up the environment
 
 We recommend using either a [NeuroDebian](http://neuro.debian.net/)
