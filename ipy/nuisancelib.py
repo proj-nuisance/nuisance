@@ -119,6 +119,10 @@ def regress(target_variable, model_df, plot=True, print_summary=True, add_qa=Tru
        target_variable: takes str value of either snr_total or tsnr to model against
        model_df       : takes pandas DataFrame with data to be used for predictive modeling
        plot           : boolean to turn the plotted graph on/off
+       print_summary  : boolean to turn the printed summary of OLS regression on/off
+       add_qa         : boolean to add/not add snr_total_qa into list of variables to be modeled
+       add_seasonal   : boolean to add/not add seasonal variables into list of variables to be modeled
+       real_data      : boolean to indicate whether or not the pandas DataFrame being fed in is from real data or not
     """
     
     if type(model_df) is not pd.core.frame.DataFrame:
@@ -228,8 +232,6 @@ def regress(target_variable, model_df, plot=True, print_summary=True, add_qa=Tru
 
         X2 = X.copy(True) # prepare for mods
 
-        # TODO: verify that variables tested via F-test (seasonal, IOPD)
-        # are not excluded if significant
         for col in X2:
             if col != variable:
                 X2[col] = 0
@@ -276,7 +278,6 @@ def regress(target_variable, model_df, plot=True, print_summary=True, add_qa=Tru
         print(model.summary())
         print("AIC: " + str(model.aic))
         print("BIC: " + str(model.bic))
-    # print(model.pvalues['snr_total_qa'])
     
     if not plot:
         return model
@@ -325,6 +326,7 @@ def scrape_var_significance(targets, p_var, df):
     dummy = [] # dud list for Seasonal f test comparison
     columns = ['Variable', p_var + ' p value', 'R2 value']
     result = pd.DataFrame(columns = columns)
+    raw_pvals = []
     
     for target in targets:
         input_df = pd.DataFrame(df,columns=['Date', 'sid', 'ses', target, 'age', 'tsnr',
@@ -333,8 +335,16 @@ def scrape_var_significance(targets, p_var, df):
         model = regress(target, input_df, plot=False, print_summary=False, real_data=True)
         
         if p_var == 'Seasonal':
-            result.loc[len(result)] = [target, Ftest(model, 'Seasonal', dummy).pvalue, model.rsquared]
+            seasonal_ftest = Ftest(model, 'Seasonal', dummy).pvalue
+            result.loc[len(result)] = [target, seasonal_ftest, model.rsquared]
+            raw_pvals.append(seasonal_ftest)
+            
         else:
-            result.loc[len(result)] = [target, model.pvalues[p_var], model.rsquared]
+            var_pval = model.pvalues[p_var]
+            result.loc[len(result)] = [target, var_pval, model.rsquared]
+            raw_pvals.append(var_pval)
+            
+    fdr_df = pd.DataFrame({'FDR-corrected': fdrcorrection(raw_pvals)[1].tolist()})
+    result = result.join(fdr_df)
         
     return result
