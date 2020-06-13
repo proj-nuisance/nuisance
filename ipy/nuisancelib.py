@@ -137,7 +137,7 @@ def regress(target_variable, model_df, plot=True, print_summary=True, add_qa=Tru
     model_df = model_df.copy()
     date_df = model_df['Date']
     model_df['Date'] = pd.to_datetime(model_df['Date'], format="%Y%m%d")
-    model_df['Date'] = model_df['Date'].map(pd.datetime.toordinal)
+    model_df['Date'] = model_df['Date'].map(lambda x: x.toordinal())
     
     f_tests_todo = ['IOPD']
     excluded_cols = ['Date', 'IOPD1', 'IOPD2', 'IOPD3', 'IOPD4', 'IOPD5', 'IOPD6', 'Seasonal (sin)', 'Seasonal (cos)']
