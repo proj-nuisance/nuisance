@@ -67,3 +67,6 @@ This Jupyter Notebook file carries out data analyses on extracted QA data and re
 
 - [`nuisancelib.py`](ipy/nuisancelib.py):
 This Python script contains all the files for building models, including orthogonalization, creating regression models, conducting F-tests, etc.
+
+## Licenses
+All code is licensed under the LICENSE file in this repository. However, subdatasets are separately licensed under their own individual license terms or under a specific Data User Agreement.
