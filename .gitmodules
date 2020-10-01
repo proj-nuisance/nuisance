@@ -23,3 +23,7 @@
 [submodule "output/simple_workflow-life"]
 	path = output/simple_workflow-life
 	url = ./output/simple_workflow-life
+[submodule "presentations/2020-NNL"]
+	path = presentations/2020-NNL
+	url = https://github.com/proj-nuisance/talk-2020-NNL.git
+	datalad-id = 5db11bd6-8755-11e9-8596-f0d5bf7b5561
