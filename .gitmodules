@@ -31,3 +31,7 @@
 	path = data/dbic-deid2-mriqc
 	url = ./data/dbic-deid2-mriqc
 	datalad-id = 295f6e05-b2b7-479b-b1be-10fe94d98be0
+[submodule "data/dbic-deid2"]
+	path = data/dbic-deid2
+	url = /home/chrispycheng/proj/nuisance/data/dbic/bids
+	datalad-id = b3e8ccae-3608-11e9-901b-002590f97d84
